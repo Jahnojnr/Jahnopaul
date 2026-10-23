@@ -39,9 +39,9 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 | Variable | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable (anonymous) key — safe in the browser |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only privileged key; used by the contact route. Never expose it |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (`https://<ref>.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key — safe in the browser. `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is accepted as an alias |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret key; server-only, used by the contact route. `SUPABASE_SECRET_KEY` is accepted as an alias. Never expose it |
 | `ADMIN_EMAILS` | Comma-separated allowlist of administrator emails (bootstrap access) |
 | `ADMIN_PREVIEW_MODE` | Development-only read-only dashboard preview |
 | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | Contact notifications |
@@ -50,13 +50,81 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 ## Supabase setup
 
+### Where the credentials come from
+
+All three values belong to a Supabase project you create; they are not part of
+this repository.
+
+1. Sign in at [supabase.com/dashboard](https://supabase.com/dashboard) and
+   **New project**. Choose a name, a database password (store it somewhere
+   safe), and a region close to you. Free tier is sufficient.
+2. Open the project. Click **Connect** at the top of the project page, or go to
+   **Settings → API Keys**. Copy:
+   - **Project URL** — looks like `https://abcdefghijklmno.supabase.co`
+   - **Publishable key** — `sb_publishable_…` on a new project, or the legacy
+     **anon** key (`eyJ…`) on an older one
+   - **Secret key** — `sb_secret_…`, or the legacy **service_role** key. It sits
+     behind a reveal control, and it must never reach the browser.
+3. Paste them into `.env.local`:
+
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmno.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxx   # or the anon eyJ… key
+   SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx            # or the service_role key
+   ADMIN_EMAILS=you@example.com
+   ```
+
+   Supabase is deprecating the `anon` / `service_role` names during 2026, so
+   both spellings are accepted — fill in whichever pair your project shows.
+
+### Apply the database
+
+The schema has to be applied once per project. On a fresh project, the fastest
+route is one paste:
+
+1. Open **SQL Editor** in the Supabase dashboard.
+2. Paste the whole of `supabase/apply-all.sql` and run it. It bundles the three
+   migrations in order: schema, Row Level Security, storage bucket.
+3. `supabase/apply-all.sql` is generated. After editing anything in
+   `supabase/migrations/`, run `npm run sql:bundle` to rebuild it.
+4. Optional: run `supabase/seed.sql` for sample content. Do not load it into a
+   production project unless you want that illustrative copy.
+
+To confirm everything is wired, run:
+
+```bash
+npm run check:supabase
+```
+
+It reads `.env.local`, checks the URL and key shapes, confirms the project
+answers, and reports which portfolio tables are missing. It never prints a full
+key.
+
+### Set the administrator password from the terminal
+
+Instead of clicking through the dashboard, you can create or update the auth
+account with the Admin API:
+
+```bash
+npm run admin:password -- --email Jahnopaul@gmail.com --password 'your strong password'
+```
+
+It reads the URL and service key from `.env.local`, creates the user if it does
+not exist (already confirmed), or updates the password if it does, and warns
+you when the address is missing from `ADMIN_EMAILS`. The password is never
+written to a file.
+
+### Create the administrator
+
 1. Create a project at [supabase.com](https://supabase.com).
 2. Apply the migrations in order — either with the Supabase CLI (`supabase db push`) or by pasting each file from `supabase/migrations/` into the SQL editor in filename order:
    - `20261023120000_init_schema.sql`
    - `20261023120100_rls_policies.sql`
    - `20261023120200_storage.sql`
 3. Optionally run `supabase/seed.sql` for local or preview data. It inserts illustrative content; replace it with verifiable records before treating the site as a professional record.
-4. Create the administrator in **Authentication → Users** (email and password), then authorise it in either of two ways:
+4. Create the administrator in **Authentication → Users → Add user** (email and
+   password; tick *Auto Confirm User* so no confirmation email is needed), then
+   authorise that address in either of two ways:
    - set `ADMIN_EMAILS` to that address, or
    - insert a row into `public.admin_users`:
 
@@ -70,11 +138,29 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 ### Reviewing the dashboard without a database
 
+Start the development server and open `/admin/login`:
+
 ```bash
-ADMIN_PREVIEW_MODE=true npm run dev
+npm run dev
 ```
 
-Then open `/admin/login` and choose **Open read-only preview**. The preview uses sample content, is unavailable in production builds, and refuses every mutation.
+Choose **Open read-only preview**. The preview uses sample content, is always
+unavailable in production builds, and refuses every mutation.
+
+`ADMIN_PREVIEW_MODE` has three states:
+
+| Value | Behaviour |
+| --- | --- |
+| unset | On in development while Supabase is not configured; off once it is |
+| `true` | On in development even when Supabase is configured — useful on a machine that cannot reach Supabase |
+| `false` | Always off outside production |
+
+Production is never affected: a production build ignores the flag entirely and
+redirects unauthenticated visitors to `/admin/login`.
+
+Inline environment variables such as `ADMIN_PREVIEW_MODE=true npm run dev` work
+in bash but not in PowerShell or cmd. Put values in `.env.local` instead — it is
+gitignored and read by `next dev` on every platform.
 
 ## Routes
 
@@ -121,6 +207,24 @@ Rules the code follows:
 - `src/server/**` and `src/lib/supabase/**` are server-only. The service-role client is imported only by the contact route.
 - Every Server Action re-checks the administrator session before doing anything. RLS is the second line of defence.
 - Draft and archived records are excluded by application queries **and** by RLS policies.
+
+## After a key has been exposed
+
+Pasting a secret key, the JWT secret, or the database password into a chat, an
+issue, or a screenshot means treating it as compromised. Anyone holding the
+service key or the JWT secret can read and write every row, ignoring RLS.
+
+Before going live:
+
+1. **Rotate the JWT secret** — Settings → API → JWT Settings. This invalidates
+   the legacy `anon` and `service_role` keys, which are signed with it.
+2. **Rotate the secret key** — Settings → API Keys → create a new secret key,
+   then delete the old one.
+3. **Reset the database password** — Settings → Database → Reset database
+   password.
+4. Update `.env.local` and the Vercel environment variables with the new values.
+5. Prefer the publishable (`sb_publishable_…`) and secret (`sb_secret_…`) keys:
+   they can be rotated independently of the JWT secret.
 
 ## Security notes
 
