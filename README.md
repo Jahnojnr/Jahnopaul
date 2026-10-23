@@ -70,11 +70,19 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 ### Reviewing the dashboard without a database
 
+Start the development server and open `/admin/login`:
+
 ```bash
-ADMIN_PREVIEW_MODE=true npm run dev
+npm run dev
 ```
 
-Then open `/admin/login` and choose **Open read-only preview**. The preview uses sample content, is unavailable in production builds, and refuses every mutation.
+Choose **Open read-only preview**. The preview uses sample content, is always
+unavailable in production builds, turns itself off once Supabase is configured,
+and refuses every mutation. Set `ADMIN_PREVIEW_MODE=false` to hide it.
+
+Inline environment variables such as `ADMIN_PREVIEW_MODE=true npm run dev` work
+in bash but not in PowerShell or cmd. Put values in `.env.local` instead — it is
+gitignored and read by `next dev` on every platform.
 
 ## Routes
 
