@@ -77,7 +77,30 @@ this repository.
    Supabase is deprecating the `anon` / `service_role` names during 2026, so
    both spellings are accepted — fill in whichever pair your project shows.
 
-### Apply the database, then create the administrator
+### Apply the database
+
+The schema has to be applied once per project. On a fresh project, the fastest
+route is one paste:
+
+1. Open **SQL Editor** in the Supabase dashboard.
+2. Paste the whole of `supabase/apply-all.sql` and run it. It bundles the three
+   migrations in order: schema, Row Level Security, storage bucket.
+3. `supabase/apply-all.sql` is generated. After editing anything in
+   `supabase/migrations/`, run `npm run sql:bundle` to rebuild it.
+4. Optional: run `supabase/seed.sql` for sample content. Do not load it into a
+   production project unless you want that illustrative copy.
+
+To confirm everything is wired, run:
+
+```bash
+npm run check:supabase
+```
+
+It reads `.env.local`, checks the URL and key shapes, confirms the project
+answers, and reports which portfolio tables are missing. It never prints a full
+key.
+
+### Create the administrator
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Apply the migrations in order — either with the Supabase CLI (`supabase db push`) or by pasting each file from `supabase/migrations/` into the SQL editor in filename order:
@@ -160,6 +183,24 @@ Rules the code follows:
 - `src/server/**` and `src/lib/supabase/**` are server-only. The service-role client is imported only by the contact route.
 - Every Server Action re-checks the administrator session before doing anything. RLS is the second line of defence.
 - Draft and archived records are excluded by application queries **and** by RLS policies.
+
+## After a key has been exposed
+
+Pasting a secret key, the JWT secret, or the database password into a chat, an
+issue, or a screenshot means treating it as compromised. Anyone holding the
+service key or the JWT secret can read and write every row, ignoring RLS.
+
+Before going live:
+
+1. **Rotate the JWT secret** — Settings → API → JWT Settings. This invalidates
+   the legacy `anon` and `service_role` keys, which are signed with it.
+2. **Rotate the secret key** — Settings → API Keys → create a new secret key,
+   then delete the old one.
+3. **Reset the database password** — Settings → Database → Reset database
+   password.
+4. Update `.env.local` and the Vercel environment variables with the new values.
+5. Prefer the publishable (`sb_publishable_…`) and secret (`sb_secret_…`) keys:
+   they can be rotated independently of the JWT secret.
 
 ## Security notes
 

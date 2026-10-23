@@ -26,7 +26,8 @@ export function getSupabaseConfig(): SupabaseConfig | null {
   const url = read(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const anonKey =
     read(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ??
-    read(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+    read(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ??
+    read(process.env.SUPABASE_PUBLISHABLE_KEY);
 
   if (!url || !anonKey) {
     return null;
