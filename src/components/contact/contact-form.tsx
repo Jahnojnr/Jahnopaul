@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
-type FormState = {
+type FormValues = {
   name: string;
   email: string;
   subject: string;
@@ -10,7 +10,7 @@ type FormState = {
   company: string;
 };
 
-const initialState: FormState = {
+const initialValues: FormValues = {
   name: "",
   email: "",
   subject: "",
@@ -18,92 +18,125 @@ const initialState: FormState = {
   company: "",
 };
 
-export function ContactForm() {
-  const [values, setValues] = useState(initialState);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+type SubmitState =
+  | { status: "idle" }
+  | { status: "submitting" }
+  | { status: "success"; message: string }
+  | { status: "error"; message: string; errors?: Record<string, string> };
 
-  function update(field: keyof FormState, value: string) {
+const fieldClass =
+  "mt-2 min-h-11 w-full border border-line bg-paper px-3 focus:border-accent focus:outline-none";
+
+export function ContactForm() {
+  const formId = useId();
+  const [values, setValues] = useState(initialValues);
+  const [state, setState] = useState<SubmitState>({ status: "idle" });
+
+  function update(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
+    if (state.status === "error") {
+      setState({ status: "idle" });
+    }
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCopied(false);
-
-    if (values.company.trim().length > 0) {
-      setError("Unable to send this submission.");
-      return;
-    }
-
-    if (
-      values.name.trim().length < 2 ||
-      !values.email.includes("@") ||
-      values.subject.trim().length < 3 ||
-      values.message.trim().length < 20
-    ) {
-      setError(
-        "Please include your name, a valid email, a subject, and a message of at least 20 characters.",
-      );
-      return;
-    }
-
-    const composed = [
-      `Name: ${values.name.trim()}`,
-      `Email: ${values.email.trim()}`,
-      `Subject: ${values.subject.trim()}`,
-      "",
-      values.message.trim(),
-    ].join("\n");
+    setState({ status: "submitting" });
 
     try {
-      await navigator.clipboard.writeText(composed);
-      setError(null);
-      setCopied(true);
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      const result = (await response.json()) as {
+        ok: boolean;
+        message?: string;
+        errors?: Record<string, string>;
+      };
+
+      if (!response.ok || !result.ok) {
+        setState({
+          status: "error",
+          message: result.message ?? "The message could not be sent.",
+          errors: result.errors,
+        });
+        return;
+      }
+
+      setValues(initialValues);
+      setState({
+        status: "success",
+        message: result.message ?? "Thank you — your message has been received.",
+      });
     } catch {
-      setError("Copying was blocked by the browser. Select and copy the composed message below.");
+      setState({
+        status: "error",
+        message: "The network request failed. Please check your connection and try again.",
+      });
     }
   }
 
+  const errors = state.status === "error" ? state.errors : undefined;
+
   return (
-    <form onSubmit={onSubmit} className="grid gap-5">
-      <p className="text-sm text-muted">
-        Email delivery will be connected in a later phase. This form validates
-        your message and copies a composed note you can send directly.
-      </p>
-      <label className="sr-only" htmlFor="company">
-        Company
-      </label>
-      <input
-        id="company"
-        name="company"
-        value={values.company}
-        onChange={(event) => update("company", event.target.value)}
-        tabIndex={-1}
-        autoComplete="off"
-        className="absolute left-[-9999px] h-0 w-0 opacity-0"
-      />
-      <label className="block">
-        <span className="text-xs uppercase tracking-[0.16em] text-muted">Name</span>
+    <form onSubmit={onSubmit} className="grid gap-6" noValidate>
+      {state.status === "success" ? (
+        <p
+          role="status"
+          className="border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent"
+        >
+          {state.message}
+        </p>
+      ) : null}
+
+      <div className="sr-only" aria-hidden="true">
+        <label htmlFor={`${formId}-company`}>Company</label>
         <input
-          name="name"
-          value={values.name}
-          onChange={(event) => update("name", event.target.value)}
-          required
-          className="mt-2 min-h-11 w-full border border-line bg-paper px-3"
+          id={`${formId}-company`}
+          name="company"
+          value={values.company}
+          onChange={(event) => update("company", event.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
         />
-      </label>
-      <label className="block">
-        <span className="text-xs uppercase tracking-[0.16em] text-muted">Email</span>
-        <input
-          type="email"
-          name="email"
-          value={values.email}
-          onChange={(event) => update("email", event.target.value)}
-          required
-          className="mt-2 min-h-11 w-full border border-line bg-paper px-3"
-        />
-      </label>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-xs uppercase tracking-[0.16em] text-muted">Name</span>
+          <input
+            name="name"
+            value={values.name}
+            onChange={(event) => update("name", event.target.value)}
+            autoComplete="name"
+            required
+            minLength={2}
+            maxLength={120}
+            aria-invalid={Boolean(errors?.name)}
+            className={fieldClass}
+          />
+          {errors?.name ? <span className="mt-1 block text-sm text-accent">{errors.name}</span> : null}
+        </label>
+
+        <label className="block">
+          <span className="text-xs uppercase tracking-[0.16em] text-muted">Email</span>
+          <input
+            type="email"
+            name="email"
+            value={values.email}
+            onChange={(event) => update("email", event.target.value)}
+            autoComplete="email"
+            required
+            maxLength={200}
+            aria-invalid={Boolean(errors?.email)}
+            className={fieldClass}
+          />
+          {errors?.email ? <span className="mt-1 block text-sm text-accent">{errors.email}</span> : null}
+        </label>
+      </div>
+
       <label className="block">
         <span className="text-xs uppercase tracking-[0.16em] text-muted">Subject</span>
         <input
@@ -111,9 +144,14 @@ export function ContactForm() {
           value={values.subject}
           onChange={(event) => update("subject", event.target.value)}
           required
-          className="mt-2 min-h-11 w-full border border-line bg-paper px-3"
+          minLength={3}
+          maxLength={160}
+          aria-invalid={Boolean(errors?.subject)}
+          className={fieldClass}
         />
+        {errors?.subject ? <span className="mt-1 block text-sm text-accent">{errors.subject}</span> : null}
       </label>
+
       <label className="block">
         <span className="text-xs uppercase tracking-[0.16em] text-muted">Message</span>
         <textarea
@@ -124,20 +162,32 @@ export function ContactForm() {
           minLength={20}
           maxLength={4000}
           rows={8}
-          className="mt-2 w-full border border-line bg-paper px-3 py-3"
+          aria-describedby={`${formId}-message-help`}
+          aria-invalid={Boolean(errors?.message)}
+          className="mt-2 w-full border border-line bg-paper px-3 py-3 focus:border-accent focus:outline-none"
         />
+        <span id={`${formId}-message-help`} className="mt-1 block text-sm text-muted">
+          Between 20 and 4000 characters.
+        </span>
+        {errors?.message ? <span className="mt-1 block text-sm text-accent">{errors.message}</span> : null}
       </label>
-      <button
-        type="submit"
-        className="inline-flex min-h-11 w-fit items-center bg-accent px-5 text-sm uppercase tracking-[0.08em] text-paper hover:bg-accent-hover"
-      >
-        Compose and copy message
-      </button>
-      {error ? <p className="text-sm text-accent">{error}</p> : null}
-      {copied ? (
-        <p className="text-sm text-accent">
-          Message copied. Paste it into your email client until server-side
-          delivery is enabled.
+
+      <div className="flex flex-wrap items-center gap-4">
+        <button
+          type="submit"
+          disabled={state.status === "submitting"}
+          className="inline-flex min-h-11 items-center bg-accent px-5 text-sm uppercase tracking-[0.08em] text-paper transition-colors hover:bg-accent-hover disabled:opacity-60"
+        >
+          {state.status === "submitting" ? "Sending…" : "Send message"}
+        </button>
+        <p className="text-sm text-muted">
+          Your message is stored so it can be answered. Nothing is added to a mailing list.
+        </p>
+      </div>
+
+      {state.status === "error" ? (
+        <p role="alert" className="border border-accent/30 bg-paper px-4 py-3 text-sm text-accent">
+          {state.message}
         </p>
       ) : null}
     </form>

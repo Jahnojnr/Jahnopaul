@@ -18,7 +18,7 @@ export default function ContactPage() {
         <PageIntro
           eyebrow="Contact"
           title="Discuss work, collaboration, or a teaching engagement."
-          description="Share a short brief. Server-side email delivery and inquiry storage will arrive with the admin and Resend integration. This form already validates input and prepares a message you can send."
+          description="Share a short brief about the work, the collaboration, or the teaching engagement. Messages are validated, stored privately, and answered by email."
         />
         <ul className="mt-8 space-y-3 text-sm uppercase tracking-[0.12em]">
           {siteConfig.professionalLinks.map((link) => (
