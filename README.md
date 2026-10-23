@@ -100,6 +100,20 @@ It reads `.env.local`, checks the URL and key shapes, confirms the project
 answers, and reports which portfolio tables are missing. It never prints a full
 key.
 
+### Set the administrator password from the terminal
+
+Instead of clicking through the dashboard, you can create or update the auth
+account with the Admin API:
+
+```bash
+npm run admin:password -- --email Jahnopaul@gmail.com --password 'your strong password'
+```
+
+It reads the URL and service key from `.env.local`, creates the user if it does
+not exist (already confirmed), or updates the password if it does, and warns
+you when the address is missing from `ADMIN_EMAILS`. The password is never
+written to a file.
+
 ### Create the administrator
 
 1. Create a project at [supabase.com](https://supabase.com).
