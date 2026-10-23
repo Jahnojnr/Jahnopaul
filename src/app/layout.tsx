@@ -1,19 +1,44 @@
 import type { Metadata } from "next";
-import { Newsreader, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
+// Self-hosted so the production build never depends on a live Google Fonts request.
+const newsreader = localFont({
+  src: [
+    {
+      path: "../../public/fonts/newsreader-variable-normal.woff2",
+      weight: "200 800",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/newsreader-variable-italic.woff2",
+      weight: "200 800",
+      style: "italic",
+    },
+  ],
   variable: "--font-newsreader",
   display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
+const sourceSans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/source-sans-3-variable-normal.woff2",
+      weight: "200 900",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/source-sans-3-variable-italic.woff2",
+      weight: "200 900",
+      style: "italic",
+    },
+  ],
   variable: "--font-source-sans",
   display: "swap",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {
