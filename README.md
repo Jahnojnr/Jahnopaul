@@ -39,9 +39,9 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 | Variable | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable (anonymous) key — safe in the browser |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only privileged key; used by the contact route. Never expose it |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (`https://<ref>.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key — safe in the browser. `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is accepted as an alias |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret key; server-only, used by the contact route. `SUPABASE_SECRET_KEY` is accepted as an alias. Never expose it |
 | `ADMIN_EMAILS` | Comma-separated allowlist of administrator emails (bootstrap access) |
 | `ADMIN_PREVIEW_MODE` | Development-only read-only dashboard preview |
 | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | Contact notifications |
@@ -50,13 +50,44 @@ Copy `.env.example` to `.env.local` and fill in what you need. The site runs wit
 
 ## Supabase setup
 
+### Where the credentials come from
+
+All three values belong to a Supabase project you create; they are not part of
+this repository.
+
+1. Sign in at [supabase.com/dashboard](https://supabase.com/dashboard) and
+   **New project**. Choose a name, a database password (store it somewhere
+   safe), and a region close to you. Free tier is sufficient.
+2. Open the project. Click **Connect** at the top of the project page, or go to
+   **Settings → API Keys**. Copy:
+   - **Project URL** — looks like `https://abcdefghijklmno.supabase.co`
+   - **Publishable key** — `sb_publishable_…` on a new project, or the legacy
+     **anon** key (`eyJ…`) on an older one
+   - **Secret key** — `sb_secret_…`, or the legacy **service_role** key. It sits
+     behind a reveal control, and it must never reach the browser.
+3. Paste them into `.env.local`:
+
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmno.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxx   # or the anon eyJ… key
+   SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx            # or the service_role key
+   ADMIN_EMAILS=you@example.com
+   ```
+
+   Supabase is deprecating the `anon` / `service_role` names during 2026, so
+   both spellings are accepted — fill in whichever pair your project shows.
+
+### Apply the database, then create the administrator
+
 1. Create a project at [supabase.com](https://supabase.com).
 2. Apply the migrations in order — either with the Supabase CLI (`supabase db push`) or by pasting each file from `supabase/migrations/` into the SQL editor in filename order:
    - `20261023120000_init_schema.sql`
    - `20261023120100_rls_policies.sql`
    - `20261023120200_storage.sql`
 3. Optionally run `supabase/seed.sql` for local or preview data. It inserts illustrative content; replace it with verifiable records before treating the site as a professional record.
-4. Create the administrator in **Authentication → Users** (email and password), then authorise it in either of two ways:
+4. Create the administrator in **Authentication → Users → Add user** (email and
+   password; tick *Auto Confirm User* so no confirmation email is needed), then
+   authorise that address in either of two ways:
    - set `ADMIN_EMAILS` to that address, or
    - insert a row into `public.admin_users`:
 

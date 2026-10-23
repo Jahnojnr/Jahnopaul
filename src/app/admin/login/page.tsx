@@ -47,13 +47,44 @@ export default async function AdminLoginPage() {
             <div className="grid gap-3 text-sm text-ink/80">
               <p className="font-serif text-xl text-charcoal">Supabase is not connected yet.</p>
               <p>
-                Add <code className="text-charcoal">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-                <code className="text-charcoal">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-                <code className="text-charcoal">.env.local</code>, create the administrator
-                account in Supabase Auth, and reload this page.
+                These values come from a Supabase project you create, not from
+                this repository:
               </p>
+              <ol className="ml-4 list-decimal space-y-1">
+                <li>
+                  Create a project at{" "}
+                  <a
+                    href="https://supabase.com/dashboard"
+                    className="text-accent underline underline-offset-4"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    supabase.com/dashboard
+                  </a>
+                  .
+                </li>
+                <li>
+                  Open <strong>Settings → API Keys</strong> (or the{" "}
+                  <strong>Connect</strong> dialog) and copy the project URL and
+                  the publishable key.
+                </li>
+                <li>
+                  Paste them into <code className="text-charcoal">.env.local</code>{" "}
+                  as <code className="text-charcoal">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+                  <code className="text-charcoal">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>,
+                  then restart the dev server.
+                </li>
+                <li>
+                  Create your sign-in account in{" "}
+                  <strong>Authentication → Users</strong> and add that email to{" "}
+                  <code className="text-charcoal">ADMIN_EMAILS</code>.
+                </li>
+              </ol>
               <p className="text-muted">
-                The setup steps are in <code>README.md</code> under “Supabase setup”.
+                A newer project shows a publishable key (
+                <code>sb_publishable_…</code>) and a secret key. The older anon
+                and service_role keys work too. Full steps are in{" "}
+                <code>README.md</code> under “Supabase setup”.
               </p>
             </div>
           )}
