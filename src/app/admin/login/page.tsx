@@ -6,8 +6,8 @@ import { LoginForm } from "@/components/admin/login-form";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { isAdminPreviewAvailable } from "@/lib/admin/preview";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { getAdminSession } from "@/server/auth";
-import { startPreviewAction } from "@/server/actions/auth";
+import { getAdminSession, getAuthenticatedEmail } from "@/server/auth";
+import { signOutAction, startPreviewAction } from "@/server/actions/auth";
 
 export const instant = false;
 
@@ -26,6 +26,7 @@ export default async function AdminLoginPage() {
   }
 
   const configured = isSupabaseConfigured();
+  const signedInEmail = configured ? await getAuthenticatedEmail() : null;
   const preview = isAdminPreviewAvailable();
 
   return (
@@ -41,6 +42,28 @@ export default async function AdminLoginPage() {
         </p>
 
         <div className="mt-8 border border-line bg-paper px-6 py-7">
+          {signedInEmail ? (
+            <div className="mb-6 grid gap-3 border border-accent/40 bg-white px-4 py-3 text-sm">
+              <p className="text-charcoal">
+                You are signed in as <strong>{signedInEmail}</strong>, but this
+                account is not an administrator.
+              </p>
+              <p className="text-muted">
+                Add the address to <code>ADMIN_EMAILS</code> in the environment,
+                or insert it into <code>public.admin_users</code>, then reload
+                this page.
+              </p>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="text-sm uppercase tracking-[0.08em] text-accent hover:text-accent-hover"
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
+          ) : null}
+
           {configured ? (
             <LoginForm />
           ) : (

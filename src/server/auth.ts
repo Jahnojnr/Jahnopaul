@@ -28,6 +28,21 @@ export type AdminUser = {
  * here. Hiding navigation links is never treated as access control.
  */
 export async function getAdminSession(): Promise<AdminUser | null> {
+  // A local preview session wins in development. It never exists in a
+  // production build, and it is read-only, so this cannot bypass real auth.
+  if (isAdminPreviewAvailable()) {
+    const cookieStore = await cookies();
+
+    if (cookieStore.get(ADMIN_PREVIEW_COOKIE)?.value === "1") {
+      return {
+        id: "preview",
+        email: "preview@local",
+        displayName: "Preview session",
+        preview: true,
+      };
+    }
+  }
+
   if (isSupabaseConfigured()) {
     const supabase = await createSupabaseServerClient();
     const {
@@ -61,19 +76,25 @@ export async function getAdminSession(): Promise<AdminUser | null> {
     };
   }
 
-  if (isAdminPreviewAvailable()) {
-    const cookieStore = await cookies();
-    if (cookieStore.get(ADMIN_PREVIEW_COOKIE)?.value === "1") {
-      return {
-        id: "preview",
-        email: "preview@local",
-        displayName: "Preview session",
-        preview: true,
-      };
-    }
+  return null;
+}
+
+/**
+ * The email of whoever is signed in to Supabase Auth, whether or not that
+ * account is an administrator. Used to explain a failed authorisation instead
+ * of silently bouncing the visitor back to the sign-in form.
+ */
+export async function getAuthenticatedEmail(): Promise<string | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
   }
 
-  return null;
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user?.email?.toLowerCase() ?? null;
 }
 
 /** For pages and layouts: redirect unauthenticated visitors to the sign-in page. */

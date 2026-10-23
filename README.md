@@ -131,8 +131,18 @@ npm run dev
 ```
 
 Choose **Open read-only preview**. The preview uses sample content, is always
-unavailable in production builds, turns itself off once Supabase is configured,
-and refuses every mutation. Set `ADMIN_PREVIEW_MODE=false` to hide it.
+unavailable in production builds, and refuses every mutation.
+
+`ADMIN_PREVIEW_MODE` has three states:
+
+| Value | Behaviour |
+| --- | --- |
+| unset | On in development while Supabase is not configured; off once it is |
+| `true` | On in development even when Supabase is configured — useful on a machine that cannot reach Supabase |
+| `false` | Always off outside production |
+
+Production is never affected: a production build ignores the flag entirely and
+redirects unauthenticated visitors to `/admin/login`.
 
 Inline environment variables such as `ADMIN_PREVIEW_MODE=true npm run dev` work
 in bash but not in PowerShell or cmd. Put values in `.env.local` instead — it is

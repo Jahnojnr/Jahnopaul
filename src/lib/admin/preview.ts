@@ -3,28 +3,41 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 /**
  * Local, read-only preview of the dashboard shell.
  *
- * It exists so the admin interface can be reviewed before a Supabase project is
- * connected. It is deliberately constrained:
+ * It exists so the admin interface can be reviewed without touching real data.
+ * It is constrained:
  *
  *   - development only (`NODE_ENV !== "production"`),
- *   - off as soon as real Supabase credentials are present,
- *   - off when ADMIN_PREVIEW_MODE=false is set explicitly,
+ *   - never available in a production build,
  *   - read-only: every mutation refuses to run in a preview session.
  *
- * It is on by default in development without Supabase so that `npm run dev`
- * is enough to review the dashboard on any platform. Setting environment
- * variables inline (`ADMIN_PREVIEW_MODE=true npm run dev`) does not work the
- * same way in PowerShell and cmd, so the default carries that weight instead.
+ * Availability:
+ *
+ *   - on by default in development when Supabase is not configured,
+ *   - off once Supabase is configured, so a real deployment never shows sample
+ *     content next to real content,
+ *   - `ADMIN_PREVIEW_MODE=true` forces it on in development even when Supabase
+ *     is configured, which is useful on a machine that cannot reach Supabase,
+ *   - `ADMIN_PREVIEW_MODE=false` forces it off.
  */
 export const ADMIN_PREVIEW_COOKIE = "admin_preview";
 export const ADMIN_PREVIEW_PARAM = "preview";
 
 export function isAdminPreviewAvailable() {
-  return (
-    process.env.NODE_ENV !== "production" &&
-    process.env.ADMIN_PREVIEW_MODE !== "false" &&
-    !isSupabaseConfigured()
-  );
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+
+  const setting = process.env.ADMIN_PREVIEW_MODE?.trim().toLowerCase();
+
+  if (setting === "false" || setting === "0" || setting === "off") {
+    return false;
+  }
+
+  if (setting === "true" || setting === "1" || setting === "on") {
+    return true;
+  }
+
+  return !isSupabaseConfigured();
 }
 
 export const PREVIEW_READ_ONLY_MESSAGE =
