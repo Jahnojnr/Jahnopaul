@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { ContactForm } from "@/components/contact/contact-form";
 import { Container } from "@/components/ui/container";
 import { PageIntro } from "@/components/ui/page-intro";
+import { siteConfig } from "@/config/site";
 import { createPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata = createPageMetadata(
@@ -12,11 +14,32 @@ export const metadata = createPageMetadata(
 export default function ContactPage() {
   return (
     <Container className="grid gap-12 py-16 md:grid-cols-[0.9fr_1.1fr]">
-      <PageIntro
-        eyebrow="Contact"
-        title="Discuss work, collaboration, or a teaching engagement."
-        description="Share a short brief. Server-side email delivery and inquiry storage will arrive with the admin and Resend integration. This form already validates input and prepares a message you can send."
-      />
+      <div>
+        <PageIntro
+          eyebrow="Contact"
+          title="Discuss work, collaboration, or a teaching engagement."
+          description="Share a short brief. Server-side email delivery and inquiry storage will arrive with the admin and Resend integration. This form already validates input and prepares a message you can send."
+        />
+        <ul className="mt-8 space-y-3 text-sm uppercase tracking-[0.12em]">
+          {siteConfig.professionalLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-accent hover:text-accent-hover"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+          <li>
+            <Link href="/resume" className="text-accent hover:text-accent-hover">
+              Résumé
+            </Link>
+          </li>
+        </ul>
+      </div>
       <ContactForm />
     </Container>
   );

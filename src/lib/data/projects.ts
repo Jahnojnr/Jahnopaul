@@ -152,6 +152,24 @@ export const projects: Project[] = [
     categories: [bySlug(categories, "education")],
     technologies: [bySlug(technologies, "nextjs"), bySlug(technologies, "figma")],
   },
+  {
+    id: "proj-draft-studio-notes",
+    title: "Studio notes (draft)",
+    slug: "studio-notes",
+    summary: "An unpublished working note used to verify that drafts never appear in public listings.",
+    problem: "Draft content must remain invisible until it is intentionally published.",
+    solution: "Public helpers only return records with a published status.",
+    role: "Internal verification",
+    content: ["This record exists so the public site can prove draft filtering before the admin dashboard exists."],
+    coverLabel: "Draft",
+    status: "draft",
+    featured: false,
+    sortOrder: 99,
+    publishedAt: "2026-10-23",
+    outcomes: ["Confirms unpublished work is excluded from public routes"],
+    categories: [bySlug(categories, "engineering")],
+    technologies: [bySlug(technologies, "nextjs")],
+  },
 ];
 
 export function getPublishedProjects() {

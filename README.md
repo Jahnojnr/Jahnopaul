@@ -2,7 +2,7 @@
 
 Editorial personal portfolio built with Next.js App Router, TypeScript, and Tailwind CSS.
 
-This repository is being built in phases. The current milestone is the public foundation: design system, shared layout, homepage, project case studies, and remaining public routes with typed sample content. Supabase, the admin dashboard, and Vercel production wiring come after this frontend is verified.
+This repository is being built in phases. The public foundation is in place: design system, shared layout, homepage, project case studies, remaining public routes, sitemap, and robots. Next: verify a Vercel deployment, then add Supabase and the admin dashboard. Sample content in `src/lib/data` is illustrative until it is replaced with verified records.
 
 ## Stack
 

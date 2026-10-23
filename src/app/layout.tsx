@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Source_Sans_3 } from "next/font/google";
 import { siteConfig } from "@/config/site";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -21,7 +22,18 @@ export const metadata: Metadata = {
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL(getSiteUrl()),
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} — ${siteConfig.headline}`,
+    description: siteConfig.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

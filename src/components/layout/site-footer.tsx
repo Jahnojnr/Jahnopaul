@@ -24,7 +24,14 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="page-shell flex flex-col gap-2 py-5 text-sm text-muted sm:flex-row sm:justify-between">
           <p>© {siteConfig.copyrightYear} {siteConfig.name}</p>
-          <p>Editorial portfolio · phased public build</p>
+          <a
+            href={siteConfig.githubUrl}
+            className="hover:text-accent"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </footer>

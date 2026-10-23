@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Container className="py-24">
           <p className="text-xs uppercase tracking-[0.22em] text-muted">404</p>
           <h1 className="mt-4 font-serif text-5xl">This page is not in the archive.</h1>

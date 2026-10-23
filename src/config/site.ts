@@ -5,6 +5,13 @@ export const siteConfig = {
   description:
     "A multidisciplinary portfolio exploring software engineering, interface design, blockchain, and technology education.",
   location: "Building remotely",
+  githubUrl: "https://github.com/Jahnojnr",
+  professionalLinks: [
+    {
+      href: "https://github.com/Jahnojnr",
+      label: "GitHub",
+    },
+  ],
   navigation: [
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },

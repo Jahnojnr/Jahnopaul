@@ -8,7 +8,14 @@ import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [menuForPath, setMenuForPath] = useState<string | null>(null);
+  const open = menuForPath === pathname;
+
+  function isCurrent(href: string) {
+    return href === "/"
+      ? pathname === "/"
+      : pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   return (
     <header className="border-b border-line">
@@ -18,10 +25,7 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
           {siteConfig.navigation.map((item) => {
-            const current =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const current = isCurrent(item.href);
 
             return (
               <Link
@@ -43,7 +47,7 @@ export function SiteHeader() {
           className="inline-flex min-h-11 items-center text-sm uppercase tracking-[0.12em] text-charcoal md:hidden"
           aria-expanded={open}
           aria-controls="mobile-navigation"
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => setMenuForPath(open ? null : pathname)}
         >
           {open ? "Close" : "Menu"}
         </button>
@@ -60,7 +64,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className="min-h-12 py-3 text-base text-charcoal"
-                onClick={() => setOpen(false)}
+                aria-current={isCurrent(item.href) ? "page" : undefined}
               >
                 {item.label}
               </Link>
